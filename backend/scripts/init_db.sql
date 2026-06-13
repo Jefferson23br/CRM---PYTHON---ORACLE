@@ -1,15 +1,13 @@
 -- ============================================================
--- CRM Piloto - Script de criação do banco Oracle
--- Execute como DBA ou usuário com permissões adequadas
+-- CRM Piloto - Criação das tabelas no Oracle XEPDB1
+-- Execute conectado como crm_user (NAO como SYSTEM)
+--
+-- Exemplo:
+--   sqlplus crm_user/sua_senha@//IP_DA_VPS:1521/XEPDB1
+--   @init_db.sql
+--
+-- Antes disso, execute 01_criar_usuario_crm.sql como SYSTEM
 -- ============================================================
-
--- 1. Criar usuário/schema (ajuste senha e tablespace conforme ambiente)
--- CREATE USER crm_user IDENTIFIED BY "sua_senha_segura"
---   DEFAULT TABLESPACE users
---   TEMPORARY TABLESPACE temp
---   QUOTA UNLIMITED ON users;
--- GRANT CONNECT, RESOURCE TO crm_user;
--- GRANT CREATE VIEW, CREATE SEQUENCE TO crm_user;
 
 -- ============================================================
 -- TABELAS
