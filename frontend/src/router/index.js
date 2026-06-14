@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/login',
@@ -71,11 +71,11 @@ router.beforeEach(async (to) => {
   const hasToken = auth.isAuthenticated
 
   if (to.meta.requiresAuth && !hasToken) {
-    return { name: 'login' }
+    return { name: 'login', replace: true }
   }
 
   if (to.meta.guest && hasToken) {
-    return { name: 'dashboard' }
+    return { name: 'dashboard', replace: true }
   }
 
   if (hasToken && !auth.usuario && to.meta.requiresAuth) {
@@ -83,7 +83,7 @@ router.beforeEach(async (to) => {
       await auth.fetchMe()
     } catch {
       auth.logout()
-      return { name: 'login' }
+      return { name: 'login', replace: true }
     }
   }
 })
