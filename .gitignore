@@ -13,10 +13,14 @@ dist/
 build/
 *.egg
 
-# Ambiente
+# Ambiente (NUNCA subir ao GitHub)
 .env
 .env.local
+.env.production
 .env.*.local
+
+# Config de deploy com dados reais (criar só na VPS)
+backend/deploy/*.local.*
 
 # IDE
 .idea/
