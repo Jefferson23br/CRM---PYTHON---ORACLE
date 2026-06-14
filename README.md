@@ -76,7 +76,15 @@ CRM - PYTHON - ORACLE/
 │   │   └── criar_tabelas.py     # Criação via SQLAlchemy (dev)
 │   ├── requirements.txt
 │   └── .env.example
-├── frontend/                    # (futuro) Vue.js
+├── frontend/                    # Vue.js 3 + Vite
+│   ├── src/
+│   │   ├── views/               # Telas (auth, clientes, tópicos...)
+│   │   ├── components/          # Layout e componentes
+│   │   ├── stores/              # Pinia (autenticação)
+│   │   ├── services/            # Cliente HTTP (axios)
+│   │   └── router/              # Rotas Vue Router
+│   ├── package.json
+│   └── .env.example
 └── README.md
 ```
 
@@ -242,6 +250,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 A documentação interativa estará em: **http://localhost:8000/docs**
 
+### Frontend (Vue.js)
+
+```bash
+cd frontend
+npm install
+copy .env.example .env   # Windows — configure VITE_API_URL
+npm run dev
+```
+
+Painel em: **http://localhost:5173**
+
 ---
 
 ## Deploy em Produção
@@ -278,8 +297,8 @@ server {
 
 ### Frontend (hospedagem web)
 
-1. Desenvolva o frontend em Vue.js (pasta `frontend/`)
-2. Configure a URL da API no `.env` do Vue: `VITE_API_URL=https://api.seudominio.com.br`
+1. Acesse a pasta `frontend/`
+2. Configure a URL da API no `.env`: `VITE_API_URL=https://api.seudominio.com.br/api/v1`
 3. Faça build: `npm run build`
 4. Publique a pasta `dist/` no painel da sua hospedagem
 5. Adicione a URL do site em `CORS_ORIGINS` no `.env` do backend
@@ -366,7 +385,7 @@ Authorization: Bearer {access_token}
 
 ## Próximos Passos
 
-- [ ] Frontend Vue.js com painel administrativo
+- [x] Frontend Vue.js com painel administrativo
 - [ ] Dashboard com métricas de funil de vendas
 - [ ] Integração Facebook (Meta) Lead Ads API
 - [ ] Integração Google Ads Conversion API
