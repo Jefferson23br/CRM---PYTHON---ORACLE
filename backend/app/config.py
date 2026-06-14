@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
 
     cors_origins: str = "http://localhost:5173"
+    cors_origin_regex: str = ""
 
     oracle_user: str = "crm_user"
     oracle_password: str = ""
@@ -42,6 +43,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def cors_origin_regex_pattern(self) -> str | None:
+        return self.cors_origin_regex.strip() or None
 
     @property
     def database_url(self) -> str:
