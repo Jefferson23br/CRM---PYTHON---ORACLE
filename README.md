@@ -2,7 +2,7 @@
 
 **Projeto piloto de CRM (Customer Relationship Management)** desenvolvido para atender empresas que precisam de um controle centralizado de relacionamento com clientes, gestão de leads, atendimentos e funil de vendas.
 
-Este é um sistema **multi-empresa (multi-tenant)**, onde cada empresa possui seus próprios usuários, clientes e dados isolados. O backend é hospedado em **VPS** e o frontend será hospedado nos **sites da Hostinger**, comunicando-se via API REST.
+Este é um sistema **multi-empresa (multi-tenant)**, onde cada empresa possui seus próprios usuários, clientes e dados isolados. O backend é hospedado em **VPS** e o frontend será hospedado em **hospedagem web**, comunicando-se via API REST.
 
 ---
 
@@ -32,7 +32,7 @@ O CRM Piloto foi concebido como uma solução enxuta e escalável para pequenas 
 ```
 ┌─────────────────────┐         HTTPS/API          ┌─────────────────────┐
 │   Frontend (Vue.js) │  ◄────────────────────────► │  Backend (FastAPI)  │
-│   Hostinger Sites   │         JWT + CORS           │       VPS           │
+│   Hospedagem Web    │         JWT + CORS           │       VPS           │
 └─────────────────────┘                              └──────────┬──────────┘
                                                                 │
                                                                 │ oracledb
@@ -52,8 +52,8 @@ O CRM Piloto foi concebido como uma solução enxuta e escalável para pequenas 
 | **Autenticação** | JWT (access + refresh tokens) |
 | **Frontend** *(futuro)* | Vue.js 3 + Vite |
 | **Hospedagem Backend** | VPS (Linux) |
-| **Hospedagem Frontend** | Hostinger |
-| **E-mail** | SMTP Hostinger (recuperação de senha) |
+| **Hospedagem Frontend** | Hospedagem web (ex.: estático/CDN) |
+| **E-mail** | SMTP do seu domínio (recuperação de senha) |
 
 ---
 
@@ -276,12 +276,12 @@ server {
 }
 ```
 
-### Frontend (Hostinger)
+### Frontend (hospedagem web)
 
 1. Desenvolva o frontend em Vue.js (pasta `frontend/`)
 2. Configure a URL da API no `.env` do Vue: `VITE_API_URL=https://api.seudominio.com.br`
 3. Faça build: `npm run build`
-4. Publique a pasta `dist/` no painel da Hostinger
+4. Publique a pasta `dist/` no painel da sua hospedagem
 5. Adicione a URL do site em `CORS_ORIGINS` no `.env` do backend
 
 ### Variáveis de ambiente importantes
@@ -290,7 +290,7 @@ server {
 |----------|-----------|
 | `SECRET_KEY` | Chave JWT (mín. 32 caracteres, única em produção) |
 | `ORACLE_*` | Credenciais do banco Oracle |
-| `CORS_ORIGINS` | URLs do frontend Hostinger |
+| `CORS_ORIGINS` | URLs do frontend na hospedagem web |
 | `SMTP_*` | E-mail para recuperação de senha |
 | `FRONTEND_URL` | URL base do frontend (links no e-mail) |
 
