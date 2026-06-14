@@ -5,17 +5,20 @@ import api from '@/services/api'
 export const useAuthStore = defineStore('auth', () => {
   const usuario = ref(null)
   const loading = ref(false)
+  const accessToken = ref(localStorage.getItem('access_token'))
 
-  const isAuthenticated = computed(() => !!localStorage.getItem('access_token'))
+  const isAuthenticated = computed(() => !!accessToken.value)
 
   function setTokens(access, refresh) {
     localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
+    accessToken.value = access
   }
 
   function clearSession() {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
+    accessToken.value = null
     usuario.value = null
   }
 
