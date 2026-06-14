@@ -15,7 +15,7 @@ const menu = [
 
 function sair() {
   auth.logout()
-  router.push('/login')
+  router.replace({ name: 'login' })
 }
 </script>
 
