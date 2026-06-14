@@ -26,7 +26,7 @@ async function enviar() {
   erro.value = ''
   try {
     await auth.registro(form.value.empresa, form.value.usuario)
-    router.push('/')
+    await router.replace({ name: 'dashboard' })
   } catch (e) {
     erro.value = e.response?.data?.detail || 'Erro ao registrar. Verifique os dados.'
   }
