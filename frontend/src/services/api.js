@@ -19,8 +19,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login'
+      if (!window.location.hash.includes('/login')) {
+        window.location.hash = '#/login'
       }
     }
     return Promise.reject(error)
