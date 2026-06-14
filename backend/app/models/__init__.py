@@ -16,6 +16,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+def _oracle_enum(enum_class, length: int = 30):
+    """Enum como VARCHAR — usa o .value (ex: ativa), não o nome (ATIVA)."""
+    return Enum(
+        enum_class,
+        native_enum=False,
+        length=length,
+        values_callable=lambda enum: [item.value for item in enum],
+    )
+
+
 class TipoUsuario(str, PyEnum):
     SUPER_ADMIN = "super_admin"
     ADMIN_EMPRESA = "admin_empresa"
@@ -66,7 +76,7 @@ class Empresa(Base):
     estado: Mapped[str | None] = mapped_column(String(2))
     cep: Mapped[str | None] = mapped_column(String(10))
     status: Mapped[StatusEmpresa] = mapped_column(
-        Enum(StatusEmpresa), default=StatusEmpresa.ATIVA, nullable=False
+        _oracle_enum(StatusEmpresa, 20), default=StatusEmpresa.ATIVA, nullable=False
     )
     criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     atualizado_em: Mapped[datetime | None] = mapped_column(
@@ -89,7 +99,7 @@ class Usuario(Base):
     email: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     tipo: Mapped[TipoUsuario] = mapped_column(
-        Enum(TipoUsuario), default=TipoUsuario.VENDEDOR, nullable=False
+        _oracle_enum(TipoUsuario, 30), default=TipoUsuario.VENDEDOR, nullable=False
     )
     telefone: Mapped[str | None] = mapped_column(String(20))
     cargo: Mapped[str | None] = mapped_column(String(100))
@@ -130,7 +140,7 @@ class Cliente(Base):
     cep: Mapped[str | None] = mapped_column(String(10))
     observacoes: Mapped[str | None] = mapped_column(Text)
     status: Mapped[StatusCliente] = mapped_column(
-        Enum(StatusCliente), default=StatusCliente.PROSPECTO, nullable=False
+        _oracle_enum(StatusCliente, 20), default=StatusCliente.PROSPECTO, nullable=False
     )
     origem: Mapped[str | None] = mapped_column(String(100))  # facebook, google_ads, etc.
     criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -159,10 +169,10 @@ class TopicoCRM(Base):
     descricao: Mapped[str | None] = mapped_column(Text)
     categoria: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[StatusTopico] = mapped_column(
-        Enum(StatusTopico), default=StatusTopico.ABERTO, nullable=False
+        _oracle_enum(StatusTopico, 20), default=StatusTopico.ABERTO, nullable=False
     )
     prioridade: Mapped[PrioridadeTopico] = mapped_column(
-        Enum(PrioridadeTopico), default=PrioridadeTopico.MEDIA, nullable=False
+        _oracle_enum(PrioridadeTopico, 20), default=PrioridadeTopico.MEDIA, nullable=False
     )
     criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     atualizado_em: Mapped[datetime | None] = mapped_column(
