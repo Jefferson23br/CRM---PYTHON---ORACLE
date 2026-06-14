@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     oracle_port: int = 1521
     oracle_service: str = "ORCL"
 
-    smtp_host: str = "smtp.hostinger.com"
+    smtp_host: str = "smtp.seudominio.com.br"
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
