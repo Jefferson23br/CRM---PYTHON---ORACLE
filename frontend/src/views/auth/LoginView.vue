@@ -14,9 +14,13 @@ async function enviar() {
   erro.value = ''
   try {
     await auth.login(email.value, senha.value)
-    router.push('/')
+    await router.replace({ name: 'dashboard' })
   } catch (e) {
-    erro.value = e.response?.data?.detail || 'E-mail ou senha incorretos'
+    if (!e.response) {
+      erro.value = 'Erro de conexão com a API. Verifique CORS e a URL da API.'
+    } else {
+      erro.value = e.response?.data?.detail || 'E-mail ou senha incorretos'
+    }
   }
 }
 </script>
