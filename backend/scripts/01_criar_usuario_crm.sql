@@ -6,10 +6,10 @@
 --   sqlplus system/sua_senha@//IP_DA_VPS:1521/XEPDB1
 -- ============================================================
 
--- Troque a senha abaixo antes de executar!
+-- Troque SUA_SENHA_AQUI pela senha real antes de executar.
 -- Use aspas duplas se a senha tiver caracteres especiais.
 
-CREATE USER crm_user IDENTIFIED BY "uma senha segura"
+CREATE USER crm_user IDENTIFIED BY "SUA_SENHA_AQUI"
   DEFAULT TABLESPACE USERS
   TEMPORARY TABLESPACE TEMP
   QUOTA UNLIMITED ON USERS;
@@ -26,5 +26,5 @@ GRANT CREATE TRIGGER TO crm_user;
 
 COMMIT;
 
-PROMPT Usuario crm_user criado com sucesso no seu banco de dados..
+PROMPT Usuario crm_user criado com sucesso no XEPDB1.
 PROMPT Proximo passo: conectar como crm_user e executar init_db.sql
