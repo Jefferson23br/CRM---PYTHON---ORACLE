@@ -2,7 +2,7 @@
 
 **Projeto piloto de CRM (Customer Relationship Management)** desenvolvido para atender empresas que precisam de um controle centralizado de relacionamento com clientes, gestão de leads, atendimentos e funil de vendas.
 
-Este é um sistema **multi-empresa (multi-tenant)**, onde cada empresa possui seus próprios usuários, clientes e dados isolados. O backend é hospedado em **VPS** e o frontend será hospedado em **hospedagem web**, comunicando-se via API REST.
+Este é um sistema **multi-empresa (multi-tenant)**, onde cada empresa possui seus próprios usuários, clientes e dados isolados. O **backend** roda em **VPS** (Python/FastAPI) e o **frontend** em **hospedagem web estática** (Vue.js), comunicando-se via API REST com HTTPS.
 
 ---
 
@@ -39,7 +39,7 @@ O CRM Piloto foi concebido como uma solução enxuta e escalável para pequenas 
                                                                 ▼
                                                      ┌─────────────────────┐
                                                      │   Oracle Database   │
-                                                     │   (Multi-tenant)    │
+                                                     │   XEPDB1 (PDB)      │
                                                      └─────────────────────┘
 ```
 
@@ -47,12 +47,12 @@ O CRM Piloto foi concebido como uma solução enxuta e escalável para pequenas 
 
 | Camada | Tecnologia |
 |--------|------------|
-| **Backend** | Python 3.11+, FastAPI, SQLAlchemy |
-| **Banco de dados** | Oracle Database |
+| **Backend** | Python 3.11+, FastAPI, SQLAlchemy, Uvicorn |
+| **Banco de dados** | Oracle Database (XEPDB1) |
 | **Autenticação** | JWT (access + refresh tokens) |
-| **Frontend** *(futuro)* | Vue.js 3 + Vite |
-| **Hospedagem Backend** | VPS (Linux) |
-| **Hospedagem Frontend** | Hospedagem web (ex.: estático/CDN) |
+| **Frontend** | Vue.js 3, Vite, Pinia, Vue Router, Axios |
+| **Hospedagem Backend** | VPS Linux + Nginx + Certbot (HTTPS) |
+| **Hospedagem Frontend** | Hospedagem estática (ex.: Hostinger) |
 | **E-mail** | SMTP do seu domínio (recuperação de senha) |
 
 ---
@@ -72,21 +72,46 @@ CRM - PYTHON - ORACLE/
 │   │   ├── services/            # Serviços (e-mail, etc.)
 │   │   └── utils/               # Segurança, dependências
 │   ├── scripts/
-│   │   ├── init_db.sql          # Script SQL Oracle
-│   │   └── criar_tabelas.py     # Criação via SQLAlchemy (dev)
+│   │   ├── 01_criar_usuario_crm.sql   # Criar schema Oracle (SYSTEM)
+│   │   ├── init_db.sql                # Criar tabelas (crm_user)
+│   │   ├── 02_verificar_instalacao.sql
+│   │   └── criar_tabelas.py           # Alternativa via SQLAlchemy (dev)
+│   ├── deploy/
+│   │   └── nginx-crm-api.conf   # Template Nginx (configurar na VPS)
+│   ├── ecosystem.config.js      # Template PM2 (opcional)
 │   ├── requirements.txt
 │   └── .env.example
-├── frontend/                    # Vue.js 3 + Vite
+├── frontend/
+│   ├── public/
+│   │   └── .htaccess            # Fallback SPA para Apache
 │   ├── src/
-│   │   ├── views/               # Telas (auth, clientes, tópicos...)
-│   │   ├── components/          # Layout e componentes
+│   │   ├── views/               # Telas do painel
+│   │   ├── components/layout/   # Sidebar e layout
 │   │   ├── stores/              # Pinia (autenticação)
 │   │   ├── services/            # Cliente HTTP (axios)
-│   │   └── router/              # Rotas Vue Router
+│   │   └── router/              # Rotas Vue Router (hash mode)
 │   ├── package.json
 │   └── .env.example
 └── README.md
 ```
+
+---
+
+## Frontend — Telas do Painel
+
+| Tela | Rota | Funcionalidade |
+|------|------|----------------|
+| Login | `/#/login` | Autenticação |
+| Registro | `/#/registro` | Criar empresa + administrador |
+| Recuperar senha | `/#/recuperar-senha` | Solicitar e-mail de recuperação |
+| Dashboard | `/#/` | Resumo (clientes, tópicos, usuários) |
+| Clientes | `/#/clientes` | CRUD de leads e clientes |
+| Usuários | `/#/usuarios` | Gerenciar equipe |
+| Tópicos CRM | `/#/topicos` | Atendimentos e negociações |
+| Detalhe do tópico | `/#/topicos/:id` | Mensagens e status |
+| Empresa | `/#/empresa` | Dados da organização |
+
+> O frontend usa **hash router** (`/#/rota`) para funcionar em hospedagem estática sem configuração extra de servidor.
 
 ---
 
@@ -107,7 +132,9 @@ Cada **empresa** é um tenant isolado. Todos os dados de clientes, tópicos e me
 
 ---
 
-## Módulos e Funcionalidades
+## API — Módulos e Rotas
+
+Documentação interativa: `https://api.seudominio.com.br/docs`
 
 ### Autenticação (`/api/v1/auth`)
 
@@ -125,40 +152,33 @@ Cada **empresa** é um tenant isolado. Todos os dados de clientes, tópicos e me
 |--------|------|-----------|
 | `GET` | `/` | Listar empresas (super_admin) |
 | `GET` | `/{id}` | Obter empresa |
-| `POST` | `/` | Criar empresa (super_admin) |
 | `PUT` | `/{id}` | Atualizar empresa |
-| `DELETE` | `/{id}` | Excluir empresa (super_admin) |
 
 ### Usuários (`/api/v1/usuarios`)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | `GET` | `/` | Listar usuários da empresa |
-| `GET` | `/{id}` | Obter usuário |
 | `POST` | `/` | Criar usuário |
 | `PUT` | `/{id}` | Atualizar usuário |
 | `DELETE` | `/{id}` | Excluir usuário |
 
 ### Clientes (`/api/v1/clientes`)
 
-Cadastro completo com: nome, e-mail, telefone, celular, CPF/CNPJ, endereço, status (lead/prospecto/ativo), origem (facebook, google_ads, etc.) e observações.
+Cadastro com: nome, e-mail, telefone, status (lead/prospecto/ativo), origem (facebook, google_ads, etc.) e observações.
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/` | Listar clientes (com busca e paginação) |
-| `GET` | `/{id}` | Obter cliente |
+| `GET` | `/` | Listar clientes (busca + paginação) |
 | `POST` | `/` | Criar cliente |
 | `PUT` | `/{id}` | Atualizar cliente |
 | `DELETE` | `/{id}` | Excluir cliente |
 
 ### Tópicos CRM (`/api/v1/topicos`)
 
-Tópicos padrão de CRM para atendimentos, negociações e acompanhamentos.
-
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/` | Listar tópicos (filtro por status/cliente) |
-| `GET` | `/{id}` | Obter tópico |
+| `GET` | `/` | Listar tópicos |
 | `POST` | `/` | Criar tópico |
 | `PUT` | `/{id}` | Atualizar tópico |
 | `DELETE` | `/{id}` | Excluir tópico |
@@ -168,18 +188,23 @@ Tópicos padrão de CRM para atendimentos, negociações e acompanhamentos.
 
 ### Mensagens (`/api/v1/topicos/{topico_id}/mensagens`)
 
-Mensagens, notas e registros dentro de cada tópico.
-
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/` | Listar mensagens do tópico |
+| `GET` | `/` | Listar mensagens |
 | `POST` | `/` | Criar mensagem |
-| `PUT` | `/{id}` | Editar mensagem (autor) |
-| `DELETE` | `/{id}` | Excluir mensagem (autor) |
+| `PUT` | `/{id}` | Editar mensagem |
+| `DELETE` | `/{id}` | Excluir mensagem |
+
+### Health checks
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /health` | API online |
+| `GET /health/db` | Conexão com Oracle |
 
 ---
 
-## Banco de Dados Oracle
+## Banco de Dados Oracle (XEPDB1)
 
 ### Tabelas
 
@@ -192,207 +217,253 @@ Mensagens, notas e registros dentro de cada tópico.
 | `mensagens` | Mensagens dentro dos tópicos |
 | `tokens_recuperacao_senha` | Tokens de recuperação de senha |
 
-### Criar o banco
+### Criar o banco (produção)
 
-**Opção 1 — Script SQL (produção):**
-
-```bash
-sqlplus crm_user/senha@ORCL @backend/scripts/init_db.sql
-```
-
-**Opção 2 — SQLAlchemy (desenvolvimento):**
+**1. Como SYSTEM no XEPDB1** — criar usuário:
 
 ```bash
-cd backend
-python -m scripts.criar_tabelas
+sqlplus system/senha@//IP_DA_VPS:1521/XEPDB1 @backend/scripts/01_criar_usuario_crm.sql
 ```
+
+**2. Como crm_user no XEPDB1** — criar tabelas:
+
+```bash
+sqlplus crm_user/senha@//IP_DA_VPS:1521/XEPDB1 @backend/scripts/init_db.sql
+```
+
+**3. Verificar:**
+
+```bash
+sqlplus crm_user/senha@//IP_DA_VPS:1521/XEPDB1 @backend/scripts/02_verificar_instalacao.sql
+```
+
+> Também é possível usar o **DBeaver**: conecte como SYSTEM, crie o usuário, depois conecte como `crm_user` e execute `init_db.sql`.
 
 ---
 
-## Instalação e Execução Local
+## Instalação Local
 
-### Pré-requisitos
-
-- Python 3.11 ou superior
-- Oracle Database (local ou remoto)
-- Oracle Instant Client (necessário para `oracledb`)
-
-### Passo a passo
+### Backend
 
 ```bash
-# 1. Clonar/acessar o projeto
-cd "CRM - PYTHON - ORACLE/backend"
-
-# 2. Criar ambiente virtual
+cd backend
 python -m venv venv
 
 # Windows
 venv\Scripts\activate
-
-# Linux/Mac
+# Linux
 source venv/bin/activate
 
-# 3. Instalar dependências
 pip install -r requirements.txt
+copy .env.example .env    # Windows
+# cp .env.example .env    # Linux
 
-# 4. Configurar variáveis de ambiente
-copy .env.example .env   # Windows
-# cp .env.example .env   # Linux
-
-# Edite o .env com suas credenciais Oracle e SMTP
-
-# 5. Criar tabelas
-python -m scripts.criar_tabelas
-
-# 6. Iniciar o servidor
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-A documentação interativa estará em: **http://localhost:8000/docs**
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
 
-### Frontend (Vue.js)
+### Frontend
 
 ```bash
 cd frontend
 npm install
-copy .env.example .env   # Windows — configure VITE_API_URL
+copy .env.example .env    # Configure VITE_API_URL
 npm run dev
 ```
 
-Painel em: **http://localhost:5173**
+- Painel: http://localhost:5173
+
+**`.env` do frontend:**
+
+```env
+VITE_API_URL=http://localhost:8000/api/v1
+```
 
 ---
 
 ## Deploy em Produção
 
+### Visão geral do deploy
+
+```
+[Usuário] → https://seu-site.com (Hostinger / estático)
+                ↓ API calls
+            https://api.seudominio.com.br (VPS + Nginx + Uvicorn)
+                ↓
+            Oracle XEPDB1 (mesma VPS ou remoto)
+```
+
 ### Backend (VPS)
 
-1. Instale Python 3.11+, Oracle Instant Client e dependências do sistema
-2. Clone o repositório na VPS
-3. Configure o `.env` com credenciais de produção
-4. Execute o script SQL `init_db.sql` no Oracle
-5. Use um process manager (systemd, supervisor ou PM2) com Gunicorn/Uvicorn:
+1. Envie os arquivos via **SCP** ou Git para a VPS
+2. Crie o `.env` **somente na VPS** (nunca no GitHub)
+3. Instale dependências e configure **systemd**
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+cd /caminho/para/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+nano .env
 ```
 
-6. Configure **Nginx** como reverse proxy com HTTPS (Let's Encrypt)
-7. Libere a porta 8000 apenas internamente; exponha 443 via Nginx
+**Serviço systemd** (`/etc/systemd/system/crm-api.service`):
 
-**Exemplo de bloco Nginx:**
+```ini
+[Unit]
+Description=CRM API Python
+After=network.target
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name api.seudominio.com.br;
+[Service]
+WorkingDirectory=/caminho/para/backend
+EnvironmentFile=/caminho/para/backend/.env
+ExecStart=/caminho/para/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+Restart=always
 
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+[Install]
+WantedBy=multi-user.target
 ```
 
-### Frontend (hospedagem web)
+```bash
+systemctl daemon-reload
+systemctl enable crm-api
+systemctl start crm-api
+```
 
-1. Acesse a pasta `frontend/`
-2. Configure a URL da API no `.env`: `VITE_API_URL=https://api.seudominio.com.br/api/v1`
-3. Faça build: `npm run build`
-4. Publique a pasta `dist/` no painel da sua hospedagem
-5. Adicione a URL do site em `CORS_ORIGINS` no `.env` do backend
+4. Configure **Nginx** como reverse proxy (template em `backend/deploy/nginx-crm-api.conf`)
+5. Ative **HTTPS** com Certbot:
 
-### Variáveis de ambiente importantes
+```bash
+certbot --nginx -d api.seudominio.com.br
+```
+
+### Frontend (hospedagem estática)
+
+1. Configure o `.env` do frontend:
+
+```env
+VITE_API_URL=https://api.seudominio.com.br/api/v1
+```
+
+2. Gere o build:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+3. Publique **todo o conteúdo** de `frontend/dist/` na hospedagem:
+
+```
+dist/
+├── .htaccess       ← necessário para Apache
+├── index.html
+├── favicon.svg
+└── assets/
+```
+
+4. Acesse pelo domínio raiz: `https://seu-site.com/`
+
+### CORS — obrigatório no backend
+
+No `.env` da VPS, adicione a URL exata do frontend:
+
+```env
+CORS_ORIGINS=https://seu-site.com,http://localhost:5173
+CORS_ORIGIN_REGEX=https://.*\.hostingersite\.com
+FRONTEND_URL=https://seu-site.com
+```
+
+```bash
+systemctl restart crm-api
+```
+
+> `CORS_ORIGIN_REGEX` é útil para subdomínios temporários de hospedagem estática.
+
+---
+
+## Variáveis de Ambiente
+
+### Backend (`.env` — somente na VPS)
 
 | Variável | Descrição |
 |----------|-----------|
 | `SECRET_KEY` | Chave JWT (mín. 32 caracteres, única em produção) |
-| `ORACLE_*` | Credenciais do banco Oracle |
-| `CORS_ORIGINS` | URLs do frontend na hospedagem web |
-| `SMTP_*` | E-mail para recuperação de senha |
-| `FRONTEND_URL` | URL base do frontend (links no e-mail) |
+| `ORACLE_USER` | Usuário Oracle (`crm_user`) |
+| `ORACLE_PASSWORD` | Senha do Oracle |
+| `ORACLE_HOST` | `localhost` se Oracle está na mesma VPS |
+| `ORACLE_SERVICE` | `XEPDB1` |
+| `CORS_ORIGINS` | URLs do frontend (separadas por vírgula) |
+| `CORS_ORIGIN_REGEX` | Regex opcional para subdomínios |
+| `FRONTEND_URL` | URL do frontend (links de e-mail) |
+| `SMTP_*` | Configuração de e-mail |
+
+### Frontend (`.env` — build local)
+
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_API_URL` | URL completa da API com `/api/v1` |
 
 ---
 
-## Segurança
+## Segurança e Boas Práticas
 
+- **Nunca** commite arquivos `.env` (já estão no `.gitignore`)
 - Senhas armazenadas com **bcrypt**
-- Autenticação via **JWT** (access token + refresh token)
+- Autenticação via **JWT**
 - Isolamento de dados por **empresa_id** (multi-tenant)
-- Controle de permissões por **tipo de usuário**
-- Tokens de recuperação de senha com **expiração de 2 horas**
-- CORS configurável para domínios do frontend
-- HTTPS obrigatório em produção
+- **HTTPS** obrigatório em produção
+- Use placeholders genéricos no repositório público
+- Configure configs reais (Nginx, domínios) **apenas na VPS/hospedagem**
 
 ---
 
-## Exemplo de Fluxo — Registro e Uso
+## Solução de Problemas
 
-### 1. Registrar empresa e administrador
+### Erro CORS no navegador
 
-```http
-POST /api/v1/auth/registro
-Content-Type: application/json
-
-{
-  "empresa": {
-    "razao_social": "Minha Empresa LTDA",
-    "nome_fantasia": "Minha Empresa",
-    "cnpj": "12.345.678/0001-90",
-    "email": "contato@minhaempresa.com.br"
-  },
-  "usuario": {
-    "nome": "João Admin",
-    "email": "joao@minhaempresa.com.br",
-    "senha": "SenhaSegura123!",
-    "telefone": "11999999999"
-  }
-}
+```
+blocked by CORS policy: No 'Access-Control-Allow-Origin'
 ```
 
-### 2. Criar cliente (com origem Facebook)
+→ Adicione a URL do frontend em `CORS_ORIGINS` no `.env` do backend e reinicie:
 
-```http
-POST /api/v1/clientes
-Authorization: Bearer {access_token}
-
-{
-  "nome": "Maria Silva",
-  "email": "maria@email.com",
-  "telefone": "11988887777",
-  "status": "lead",
-  "origem": "facebook"
-}
+```bash
+systemctl restart crm-api
 ```
 
-### 3. Abrir tópico de negociação
+### Login salva mas não navega / Sair não funciona
 
-```http
-POST /api/v1/topicos
-Authorization: Bearer {access_token}
+→ Atualize o frontend para a versão com autenticação reativa (Pinia) e faça novo `npm run build`.
 
-{
-  "titulo": "Proposta comercial - Maria Silva",
-  "descricao": "Cliente interessado no plano premium",
-  "cliente_id": 1,
-  "categoria": "vendas",
-  "prioridade": "alta"
-}
-```
+### 404 em rotas do frontend (`/login`)
+
+→ Use hash router (`/#/login`) e publique o `.htaccess` junto com o `dist/`.
+
+### ORA-02290 check constraint violated (status ATIVA)
+
+→ Enums Oracle devem usar valores em minúsculo (`ativa`, não `ATIVA`). Já corrigido nos modelos.
 
 ---
 
-## Próximos Passos
+## Status do Projeto
 
+- [x] Backend Python/FastAPI
+- [x] Oracle XEPDB1 + tabelas multi-tenant
+- [x] API REST completa (auth, clientes, usuários, tópicos, mensagens)
+- [x] Deploy VPS + Nginx + HTTPS
 - [x] Frontend Vue.js com painel administrativo
+- [x] Autenticação JWT integrada
+- [x] CORS configurável
 - [ ] Dashboard com métricas de funil de vendas
 - [ ] Integração Facebook (Meta) Lead Ads API
 - [ ] Integração Google Ads Conversion API
 - [ ] Etapas configuráveis do funil de vendas
 - [ ] Notificações em tempo real (WebSocket)
 - [ ] Relatórios e exportação (PDF/Excel)
-- [ ] API de webhooks para integrações externas
 
 ---
 
@@ -402,6 +473,6 @@ Projeto piloto — uso interno e comercial conforme definido pelo proprietário.
 
 ---
 
-## Contato e Suporte
+## Contato
 
 Para dúvidas sobre implantação, integrações ou customizações, entre em contato com o responsável pelo projeto.
